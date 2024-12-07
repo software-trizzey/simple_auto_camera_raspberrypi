@@ -1,5 +1,5 @@
 use rascam::*;
-use reqwest::multipart;
+use reqwest::Client;
 use std::env;
 use std::fs::File;
 use std::io::Write;
