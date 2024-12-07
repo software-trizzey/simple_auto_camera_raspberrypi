@@ -4,10 +4,9 @@ use std::env;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
+use serde_json::json;
 use chrono::Local;
 use tokio::time;
-use tokio::fs::File;
-use tokio::io::AsyncReadExt;
 use tracing::{error, info};
 use dotenv::dotenv;
 
@@ -48,13 +47,13 @@ async fn run(info: &CameraInfo) -> Result<(), Box<dyn std::error::Error>> {
 
     info!("Saved image as {}", filename);
 
-    send_discord_message(static_path.to_str().unwrap()).await?;
+    send_discord_message().await?;
 
     info!("Done!");
     Ok(())
 }
 
-async fn send_discord_message(file_path: &str) -> Result<(), Box<dyn std::error::Error>> {
+async fn send_discord_message() -> Result<(), Box<dyn std::error::Error>> {
     let discord_url = env::var("DISCORD_URL").unwrap_or_default();
 
     if discord_url.is_empty() {
@@ -64,19 +63,15 @@ async fn send_discord_message(file_path: &str) -> Result<(), Box<dyn std::error:
 
     let discord_client = reqwest::Client::new();
 
-    // Read the file into memory
-    let mut file = File::open(file_path).await?;
-    let mut buffer = Vec::new();
-    file.read_to_end(&mut buffer).await?;
+    let payload = json!({
+        "content": "New image from Raspberry Pi camera!",
+    });
 
-    let file_part = multipart::Part::bytes(buffer)
-        .mime_str("image/jpeg")?; // Specify the MIME type (optional, but helpful)
-
-    let form = multipart::Form::new()
-        .text("content", "New photo taken by Raspberry Pi Camera")
-        .part("file", file_part);
-
-    let response = discord_client.post(&discord_url).multipart(form).send().await;
+    // TODO: Send file as a multipart request
+    let response = discord_client.post(&discord_url)
+        .json(&payload)
+        .send()
+        .await;
 
     match response {
         Ok(_) => println!("Discord message sent!"),

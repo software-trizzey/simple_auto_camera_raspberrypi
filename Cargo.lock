@@ -1137,6 +1137,8 @@ dependencies = [
  "dotenv",
  "rascam",
  "reqwest",
+ "serde",
+ "serde_json",
  "tokio",
  "tracing",
 ]
