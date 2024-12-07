@@ -7,8 +7,10 @@ use std::path::PathBuf;
 use chrono::Local;
 use std::{thread, time};
 use tracing::{error, info};
+use dotenv::dotenv;
 
 fn main() {
+    dotenv().ok();
 
     let info = info().unwrap();
     if info.cameras.len() < 1 {
