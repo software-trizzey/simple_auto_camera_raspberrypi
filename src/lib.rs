@@ -1,3 +1,4 @@
+use rascam::*;
 use std::env;
 use std::fs::File;
 use std::io::Write;
@@ -5,7 +6,8 @@ use std::path::PathBuf;
 use serde_json::json;
 use chrono::Local;
 use tokio::time;
-use tracing::{error, info};
+use tracing::info;
+
 
 
 async fn run(info: &CameraInfo) -> Result<(), Box<dyn std::error::Error>> {
