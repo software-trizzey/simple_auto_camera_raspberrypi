@@ -7,7 +7,7 @@ Simple rust program that captures images on a Raspberry Pi.
 
 _Note: This was tested using a Raspberry Pi 4 Model B Rev 1.4 and Ardu Camera_
 
-1. Clone repo to raspberry pi `git clone https://github.com/software-trizzey/simple_auto_camera_raspberrypi.git`
+1. Clone repo to Raspberry Pi `git clone https://github.com/software-trizzey/simple_auto_camera_raspberrypi.git`
 1. Navigate to project `cd simple_auto_camera_raspberrypi`
 1. Build program `cargo build --release`
 1. Run production version `./release/simple_auto_camera_raspberrypi.bin`
@@ -27,4 +27,4 @@ scp -r  pi@[ip-address-redacted]:/home/pi/Projects/simple_auto_camera_raspberryp
 ```
 
 ## References:
-- This project provides an API for our program to interact with the raspberry pi camera.
+- This [project](https://github.com/pedrosland/rascam) provides an API for our program to interact with the raspberry pi camera.
