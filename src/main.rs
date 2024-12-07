@@ -25,7 +25,7 @@ fn main() {
 }
 
 
-fn run(info: &CameraInfo) {
+async fn run(info: &CameraInfo) {
     let mut camera = SimpleCamera::new(info.clone()).unwrap();
     camera.activate().unwrap();
 
@@ -48,7 +48,7 @@ fn run(info: &CameraInfo) {
     info!("Saved image as {}", filename);
 
     let filepath = static_path.to_str().unwrap();
-    send_discord_message(filepath).unwrap();
+    send_discord_message(filepath).await?;
 
     println!("Done!");
 }
