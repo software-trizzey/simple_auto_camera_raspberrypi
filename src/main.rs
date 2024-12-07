@@ -6,6 +6,8 @@ use std::io::Write;
 use std::path::PathBuf;
 use chrono::Local;
 use tokio::time;
+use tokio::fs::File;
+use tokio::io::AsyncReadExt;
 use tracing::{error, info};
 use dotenv::dotenv;
 
@@ -62,7 +64,12 @@ async fn send_discord_message(file_path: &str) -> Result<(), Box<dyn std::error:
 
     let discord_client = reqwest::Client::new();
 
-    let file_part = multipart::Part::file(file_path)?
+    // Read the file into memory
+    let mut file = File::open(file_path).await?;
+    let mut buffer = Vec::new();
+    file.read_to_end(&mut buffer).await?;
+
+    let file_part = multipart::Part::bytes(buffer)
         .mime_str("image/jpeg")?; // Specify the MIME type (optional, but helpful)
 
     let form = multipart::Form::new()
