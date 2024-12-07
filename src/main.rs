@@ -6,7 +6,6 @@ use std::io::Write;
 use std::path::PathBuf;
 use chrono::Local;
 use tokio::time;
-use serde_json::json;
 use tracing::{error, info};
 use dotenv::dotenv;
 
@@ -62,15 +61,19 @@ async fn send_discord_message(file_path: &str) -> Result<(), Box<dyn std::error:
     }
 
     let discord_client = reqwest::Client::new();
+
+    let file_part = multipart::Part::file(file_path)?
+        .mime_str("image/jpeg")?; // Specify the MIME type (optional, but helpful)
+
     let form = multipart::Form::new()
         .text("content", "New photo taken by Raspberry Pi Camera")
-        .file("file", file_path)?;
+        .part("file", file_part);
 
     let response = discord_client.post(&discord_url).multipart(form).send().await;
 
     match response {
-        Ok(_) => info!("Discord message sent!"),
-        Err(err) => info!("Error: {}", err),
+        Ok(_) => println!("Discord message sent!"),
+        Err(err) => println!("Error: {}", err),
     }
 
     Ok(())
