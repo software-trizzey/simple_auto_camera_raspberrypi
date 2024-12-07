@@ -1,36 +1,38 @@
 use rascam::*;
 use reqwest::Client;
+use reqwest::multipart;
 use std::env;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
+use tokio::time;
 use chrono::Local;
 use std::{thread, time};
 use serde_json::json;
 use tracing::{error, info};
 use dotenv::dotenv;
 
-fn main() {
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv().ok();
 
     let info = info().unwrap();
     if info.cameras.len() < 1 {
         error!("Found 0 cameras. Exiting");
-        // note that this doesn't run destructors
         ::std::process::exit(1);
     }
     info!("{}", info);
 
-    run(&info.cameras[0]);
+    run(&info.cameras[0]).await?;
+    Ok(())
 }
 
-
-async fn run(info: &CameraInfo) {
+async fn run(info: &CameraInfo) -> Result<()> {
     let mut camera = SimpleCamera::new(info.clone()).unwrap();
     camera.activate().unwrap();
 
-    let sleep_duration = time::Duration::from_millis(2000);
-    thread::sleep(sleep_duration);
+    tokio::time::sleep(time::Duration::from_millis(2000)).await;
 
     let b = camera.take_one().unwrap();
 
@@ -43,41 +45,40 @@ async fn run(info: &CameraInfo) {
     static_path.push(&filename);
 
     println!("Creating file at {:?}", static_path);
-    File::create(static_path).unwrap().write_all(&b).unwrap();
+    let mut file = File::create(&static_path).unwrap();
+    file.write_all(&b).unwrap();
 
     info!("Saved image as {}", filename);
 
-    let filepath = static_path.to_str().unwrap();
-    send_discord_message(filepath).await?;
+    let mut contents = String::new();
+    send_discord_message(static_path.to_str().unwrap()).await?;
 
-    println!("Done!");
+    info!("Done!");
 }
 
 
-async fn send_discord_message(filepath: &str) -> Result<()> {
+async fn send_discord_message(file_contents: &str) -> Result<()> {
     let discord_url = env::var("DISCORD_URL")?;
 
     if discord_url.is_empty() {
-        return Ok(println!("No Discord URL provided... Skipping notification."));
+        info!("No Discord URL provided... Skipping notification.");
+        return Ok(());
     }
 
     let discord_client = reqwest::Client::new();
 
-    let payload = json!({
-        "file": File::open(filepath)?,
-        "content": format!(
-            "New photo taken by Raspberyy Pi Camera"
-        )
-    });
+    let form = multipart::Form::new()
+    .text("content", "New photo taken by Raspberry Pi Camera")
+    .file("file", file_contents)?;
 
     let response = discord_client.post(&discord_url)
-        .json(&payload)
+        .multipart(form)
         .send()
         .await;
 
     match response {
-        Ok(_) => println!("Discord message sent!"),
-        Err(err) => println!("Error: {}", err),
+        Ok(_) => info!("Discord message sent!"),
+        Err(err) => error!("Error: {}", err),
     }
 
     Ok(())
