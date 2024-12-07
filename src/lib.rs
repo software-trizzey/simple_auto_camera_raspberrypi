@@ -9,35 +9,6 @@ use tokio::time;
 use tracing::info;
 
 
-
-async fn run(info: &CameraInfo) -> Result<(), Box<dyn std::error::Error>> {
-    let mut camera = SimpleCamera::new(info.clone()).unwrap();
-    camera.activate().unwrap();
-
-    time::sleep(time::Duration::from_millis(2000)).await;
-
-    let b = camera.take_one().unwrap();
-
-    let current_directory = env::current_dir().unwrap();
-    let mut static_path = PathBuf::from(current_directory);
-    static_path.push("static");
-
-    let timestamp = Local::now().format("%Y%m%d%H%M%S").to_string();
-    let filename = format!("raspi-camera-{}.jpg", timestamp);
-    static_path.push(&filename);
-
-    info!("Creating file at {:?}", static_path);
-    let mut file = File::create(&static_path).unwrap();
-    file.write_all(&b).unwrap();
-
-    info!("Saved image as {}", filename);
-
-    send_discord_message().await?;
-
-    info!("Done!");
-    Ok(())
-}
-
 async fn send_discord_message() -> Result<(), Box<dyn std::error::Error>> {
     let discord_url = env::var("DISCORD_URL").unwrap_or_default();
 
@@ -63,5 +34,33 @@ async fn send_discord_message() -> Result<(), Box<dyn std::error::Error>> {
         Err(err) => println!("Error: {}", err),
     }
 
+    Ok(())
+}
+
+pub async fn run(info: &CameraInfo) -> Result<(), Box<dyn std::error::Error>> {
+    let mut camera = SimpleCamera::new(info.clone()).unwrap();
+    camera.activate().unwrap();
+
+    time::sleep(time::Duration::from_millis(2000)).await;
+
+    let b = camera.take_one().unwrap();
+
+    let current_directory = env::current_dir().unwrap();
+    let mut static_path = PathBuf::from(current_directory);
+    static_path.push("static");
+
+    let timestamp = Local::now().format("%Y%m%d%H%M%S").to_string();
+    let filename = format!("raspi-camera-{}.jpg", timestamp);
+    static_path.push(&filename);
+
+    info!("Creating file at {:?}", static_path);
+    let mut file = File::create(&static_path).unwrap();
+    file.write_all(&b).unwrap();
+
+    info!("Saved image as {}", filename);
+
+    send_discord_message().await?;
+
+    info!("Done!");
     Ok(())
 }
