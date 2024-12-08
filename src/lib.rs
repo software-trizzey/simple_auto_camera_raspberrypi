@@ -10,7 +10,7 @@ use tokio::time;
 use tracing::info;
 
 
-async fn send_discord_message(file_path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+fn send_discord_message(file_path: &Path) -> Result<(), Box<dyn std::error::Error>> {
     let discord_url = env::var("DISCORD_URL").unwrap_or_default();
     if discord_url.is_empty() {
         info!("No Discord URL provided... Skipping notification.");
@@ -24,8 +24,7 @@ async fn send_discord_message(file_path: &Path) -> Result<(), Box<dyn std::error
 
     let response = discord_client.post(&discord_url)
         .multipart(form)
-        .send()
-        .await;
+        .send()?;
 
     match response {
         Ok(_) => println!("Discord message sent!"),
@@ -57,7 +56,7 @@ pub async fn run(info: &CameraInfo) -> Result<(), Box<dyn std::error::Error>> {
 
     info!("Saved image as {}", filename);
 
-    send_discord_message(&static_path).await?;
+    send_discord_message(&static_path)?;
 
     info!("Done!");
     Ok(())
