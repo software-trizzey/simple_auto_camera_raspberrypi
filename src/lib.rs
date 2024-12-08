@@ -2,10 +2,10 @@ use chrono::Local;
 use rascam::*;
 use reqwest::{Body, Client};
 use std::env;
-use std::io::Write;
 use std::path::{ Path, PathBuf };
 use tokio::fs::File;
 use tokio::time;
+use tokio::io::AsyncWriteExt;
 use tokio_util::codec::{BytesCodec, FramedRead};
 use tracing::{ info, error };
 
@@ -54,7 +54,7 @@ pub async fn run(info: &CameraInfo) -> Result<(), Box<dyn std::error::Error>> {
 
     info!("Creating file at {:?}", static_path);
     let mut file = File::create(&static_path).await.unwrap();
-    file.write_all(image_buffer).await?;
+    file.write_all(&image_buffer).await?;
     file.flush().await?;
     drop(file); // ensure file is closed
 
