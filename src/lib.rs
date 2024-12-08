@@ -26,10 +26,7 @@ fn send_discord_message(file_path: &Path) -> Result<(), Box<dyn std::error::Erro
         .multipart(form)
         .send()?;
 
-    match response {
-        Ok(_) => println!("Discord message sent!"),
-        Err(err) => println!("Error: {}", err),
-    }
+    info!("Discord message sent: {:?}", response);
 
     Ok(())
 }
