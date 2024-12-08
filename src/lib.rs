@@ -4,7 +4,6 @@ use futures::stream::TryStreamExt;
 use reqwest::{Body, Client};
 use std::env;
 use std::io::Write;
-use std::fs::File;
 use std::path::PathBuf;
 use std::path::Path;
 use tokio::fs::File;
