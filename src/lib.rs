@@ -1,33 +1,29 @@
 use chrono::Local;
 use rascam::*;
-use futures::stream::TryStreamExt;
 use reqwest::{Body, Client};
 use std::env;
 use std::io::Write;
-use std::path::PathBuf;
-use std::path::Path;
+use std::path::{ Path, PathBuf };
 use tokio::fs::File;
 use tokio::time;
 use tokio_util::codec::{BytesCodec, FramedRead};
-use tracing::info;
+use tracing::{ info, error };
 
 
-fn file_to_body(file: File) -> Body {
-    let stream = FramedRead::new(file, BytesCodec::new());
-    let body = Body::wrap_stream(stream);
-    body
-}
-
-async fn send_discord_message(file: File) -> Result<(), Box<dyn std::error::Error>> {
+async fn send_discord_message(file_path: &Path) -> Result<(), Box<dyn std::error::Error>> {
     let discord_url = env::var("DISCORD_URL").unwrap_or_default();
     if discord_url.is_empty() {
         info!("No Discord URL provided... Skipping notification.");
         return Ok(());
     }
 
+    let file = File::open(file_path).await?;
+    let stream = FramedRead::new(file, BytesCodec::new());
+    let wrapped_file_body = Body::wrap_stream(stream);
+
     let client = Client::new();
     let response = client.post(&discord_url)
-        .body(file_to_body(file))
+        .body(wrapped_file_body)
         .send()
         .await?;
 
@@ -46,7 +42,7 @@ pub async fn run(info: &CameraInfo) -> Result<(), Box<dyn std::error::Error>> {
 
     time::sleep(time::Duration::from_millis(2000)).await;
 
-    let b = camera.take_one().unwrap();
+    let image_buffer = camera.take_one().unwrap();
 
     let current_directory = env::current_dir().unwrap();
     let mut static_path = PathBuf::from(current_directory);
@@ -58,11 +54,13 @@ pub async fn run(info: &CameraInfo) -> Result<(), Box<dyn std::error::Error>> {
 
     info!("Creating file at {:?}", static_path);
     let mut file = File::create(&static_path).await.unwrap();
-    file.try_into_std().unwrap().write_all(&b).unwrap();
+    file.write_all(image_buffer).await?;
+    file.flush().await?;
+    drop(file); // ensure file is closed
 
     info!("Saved image as {}", filename);
 
-    send_discord_message(file).await?;
+    send_discord_message(&static_path).await?;
 
     info!("Done!");
     Ok(())
