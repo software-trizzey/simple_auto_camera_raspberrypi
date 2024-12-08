@@ -58,7 +58,7 @@ pub async fn run(info: &CameraInfo) -> Result<(), Box<dyn std::error::Error>> {
 
     info!("Creating file at {:?}", static_path);
     let mut file = File::create(&static_path).await.unwrap();
-    file.write_all(&b).unwrap();
+    file.try_into_std().write_all(&b).unwrap();
 
     info!("Saved image as {}", filename);
 
