@@ -1,5 +1,7 @@
 # A Simple Automated Raspberry Pi Camera
 
+![Raspberry Pi Demo](https://raw.githubusercontent.com/software-trizzey/images/refs/heads/main/assets/images/raspi-camera-demo.jpg)
+
 ## Overview
 Simple rust program that captures images on a Raspberry Pi.
 
