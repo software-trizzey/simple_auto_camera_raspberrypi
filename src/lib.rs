@@ -4,6 +4,7 @@ use futures::stream::TryStreamExt;
 use reqwest::{Body, Client};
 use std::env;
 use std::io::Write;
+use std::fs::File;
 use std::path::PathBuf;
 use std::path::Path;
 use tokio::fs::File;
@@ -57,7 +58,7 @@ pub async fn run(info: &CameraInfo) -> Result<(), Box<dyn std::error::Error>> {
     static_path.push(&filename);
 
     info!("Creating file at {:?}", static_path);
-    let mut file = File::create(&static_path).unwrap();
+    let mut file = File::create(&static_path).await.unwrap();
     file.write_all(&b).unwrap();
 
     info!("Saved image as {}", filename);
