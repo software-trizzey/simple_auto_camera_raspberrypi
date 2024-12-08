@@ -9,23 +9,21 @@ use tokio::time;
 use tracing::info;
 
 
-async fn send_discord_message() -> Result<(), Box<dyn std::error::Error>> {
+async fn send_discord_message(file_path: &Path) -> Result<(), Box<dyn std::error::Error>> {
     let discord_url = env::var("DISCORD_URL").unwrap_or_default();
-
     if discord_url.is_empty() {
         info!("No Discord URL provided... Skipping notification.");
         return Ok(());
     }
 
+    let client = reqwest::Client::new();
+    let form = multipart::Form::new()
+        .text("content", "New image from Raspberry Pi camera!")
+        .file("file", file_path)?;
     let discord_client = reqwest::Client::new();
 
-    let payload = json!({
-        "content": "New image from Raspberry Pi camera!",
-    });
-
-    // TODO: Send file as a multipart request
     let response = discord_client.post(&discord_url)
-        .json(&payload)
+        .multipart(form)
         .send()
         .await;
 
@@ -59,7 +57,7 @@ pub async fn run(info: &CameraInfo) -> Result<(), Box<dyn std::error::Error>> {
 
     info!("Saved image as {}", filename);
 
-    send_discord_message().await?;
+    send_discord_message(&static_path).await?;
 
     info!("Done!");
     Ok(())
