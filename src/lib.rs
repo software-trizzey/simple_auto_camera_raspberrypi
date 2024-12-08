@@ -1,32 +1,38 @@
+use chrono::Local;
 use rascam::*;
-use reqwest::blocking::{ multipart, Client };
+use futures::stream::TryStreamExt;
+use reqwest::{Body, Client};
 use std::env;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 use std::path::Path;
-use chrono::Local;
+use tokio::fs::File;
 use tokio::time;
+use tokio_util::codec::{BytesCodec, FramedRead};
 use tracing::info;
 
 
-fn send_discord_message(file_path: &Path) -> Result<(), Box<dyn std::error::Error>> {
+fn file_to_body(file: File) -> Body {
+    let stream = FramedRead::new(file, BytesCodec::new());
+    let body = Body::wrap_stream(stream);
+    body
+}
+
+async fn send_discord_message(file: &File) -> Result<(), Box<dyn std::error::Error>> {
     let discord_url = env::var("DISCORD_URL").unwrap_or_default();
     if discord_url.is_empty() {
         info!("No Discord URL provided... Skipping notification.");
         return Ok(());
     }
 
-    let form = multipart::Form::new()
-        .text("content", "New image from Raspberry Pi camera!")
-        .file("file", file_path)?;
-    let discord_client = Client::new();
+    let client = Client::new();
+    let response = client.post(&discord_url)
+        .body(file_to_body(file))
+        .send()
+        .await?;
 
-    let response = discord_client.post(&discord_url)
-        .multipart(form)
-        .send()?;
-
-    info!("Discord message sent: {:?}", response);
+    info!("Discord message sent");
 
     Ok(())
 }
@@ -53,7 +59,7 @@ pub async fn run(info: &CameraInfo) -> Result<(), Box<dyn std::error::Error>> {
 
     info!("Saved image as {}", filename);
 
-    send_discord_message(&static_path)?;
+    send_discord_message(&file)?;
 
     info!("Done!");
     Ok(())
