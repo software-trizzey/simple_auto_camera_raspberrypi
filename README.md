@@ -34,24 +34,26 @@ _Note: This will run the program every 30 minutes. Adjust the `OnCalendar` value
 
 ```bash
 cargo build --release
-sudo cp target/release/your_program_name /usr/local/bin/your_program_name
+sudo cp target/release/simple_auto_camera_raspberrypi /usr/local/bin/simple_auto_camera_raspberrypi
 ```
 
 2. **Create the Service File**
 ```bash
-sudo nano /etc/systemd/system/your_program.service
+sudo nano /etc/systemd/system/run_camera.service
 ```
 
 File Content:
 
 ```ini
 [Unit]
-Description=Run Rust Program
+Description=Run Raspberry Pi Camera
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/your_program_name
+ExecStart=/usr/local/bin/simple_auto_camera_raspberrypi
 Restart=on-failure
+Environment="DISCORD_URL=<your_discord_server_url"
+WorkingDirectory=/home/pi/Projects/simple_auto_camera_raspberrypi
 
 [Install]
 WantedBy=multi-user.target
@@ -60,14 +62,14 @@ WantedBy=multi-user.target
 3. **Create the Timer File**
 
 ```bash
-sudo nano /etc/systemd/system/your_program.timer
+sudo nano /etc/systemd/system/run_camera.timer
 ```
 
 File Content:
 
 ```ini
 [Unit]
-Description=Run Rust Program Every 30 Minutes
+Description=Run Raspberry Pi Camera Every 30 minutes
 
 [Timer]
 OnCalendar=*:0/30
@@ -81,9 +83,11 @@ WantedBy=timers.target
 
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable your_program.timer
-sudo systemctl start your_program.timer
+sudo systemctl enable run_camera.timer
+sudo systemctl start run_camera.timer
 ```
+
+Note: You can manully test the service using `sudo systemctl start run_camera.service`
 
 5. **Verify the Timer**
 
