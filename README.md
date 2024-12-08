@@ -95,6 +95,11 @@ Note: You can manully test the service using `sudo systemctl start run_camera.se
 systemctl list-timers --all
 ```
 
+6. **Check Service Logs**
+
+```bash
+journalctl -u run_camera.service
+```
 
 ## References:
 - This [project](https://github.com/pedrosland/rascam) provides an API for our program to interact with the raspberry pi camera.
