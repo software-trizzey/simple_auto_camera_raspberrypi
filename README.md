@@ -37,7 +37,7 @@ cargo build --release
 sudo cp target/release/your_program_name /usr/local/bin/your_program_name
 ```
 
-1. **Create the Service File**
+2. **Create the Service File**
 ```bash
 sudo nano /etc/systemd/system/your_program.service
 ```
@@ -57,7 +57,7 @@ Restart=on-failure
 WantedBy=multi-user.target
 ```
 
-1. **Create the Timer File**
+3. **Create the Timer File**
 
 ```bash
 sudo nano /etc/systemd/system/your_program.timer
@@ -77,7 +77,7 @@ Persistent=true
 WantedBy=timers.target
 ```
 
-1. **Start and Enable the Timer**
+4. **Start and Enable the Timer**
 
 ```bash
 sudo systemctl daemon-reload
@@ -85,7 +85,7 @@ sudo systemctl enable your_program.timer
 sudo systemctl start your_program.timer
 ```
 
-1. **Verify the Timer**
+5. **Verify the Timer**
 
 ```bash
 systemctl list-timers --all
