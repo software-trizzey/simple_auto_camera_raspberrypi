@@ -1,6 +1,7 @@
 use chrono::Local;
 use rascam::*;
 use reqwest::{Body, Client};
+use reqwest::multipart;
 use std::env;
 use std::path::{ Path, PathBuf };
 use tokio::fs::File;
@@ -17,20 +18,29 @@ async fn send_discord_message(file_path: &Path) -> Result<(), Box<dyn std::error
         return Ok(());
     }
 
-    let file = File::open(file_path).await?;
-    let stream = FramedRead::new(file, BytesCodec::new());
-    let wrapped_file_body = Body::wrap_stream(stream);
+    let mut file = File::open(file_path).await?;
+    let mut file_contents = Vec::new();
+    tokio::io::AsyncReadExt::read_to_end(&mut file, &mut file_contents).await?;
+
+    let form = multipart::Form::new()
+        .text("content", "New photo from Raspberry Pi Camera")
+        .part(
+            "file",
+            multipart::Part::bytes(file_contents).file_name(
+                file_path.file_name().unwrap().to_string_lossy().to_string(),
+            ),
+        );
 
     let client = Client::new();
-    let response = client.post(&discord_url)
-        .body(wrapped_file_body)
-        .send()
-        .await?;
+    let response = client.post(&discord_url).multipart(form).send().await?;
 
     if response.status().is_success() {
         info!("Message sent successfully");
     } else {
-        error!("Failed to send message: {:?}", response.text().await?);
+        error!(
+            "Failed to send message: {:?}",
+            response.text().await.unwrap_or_else(|_| "Unknown error".to_string())
+        );
     }
 
     Ok(())
