@@ -1,9 +1,9 @@
 use rascam::*;
+use reqwest::blocking::{ multipart, Client };
 use std::env;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
-use reqwest::multipart;
 use std::path::Path;
 use chrono::Local;
 use tokio::time;
@@ -17,11 +17,10 @@ async fn send_discord_message(file_path: &Path) -> Result<(), Box<dyn std::error
         return Ok(());
     }
 
-    let client = reqwest::Client::new();
     let form = multipart::Form::new()
         .text("content", "New image from Raspberry Pi camera!")
         .file("file", file_path)?;
-    let discord_client = reqwest::Client::new();
+    let discord_client = Client::new();
 
     let response = discord_client.post(&discord_url)
         .multipart(form)

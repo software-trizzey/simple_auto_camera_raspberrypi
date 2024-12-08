@@ -7,7 +7,7 @@ edition = "2021"
 rascam = "0.0.2"
 tracing = "0.1.37"
 chrono = "0.4"
-reqwest = { version = "0.12.9", features = ["multipart", "json"] }
+reqwest = { version = "0.12.9", features = ["multipart", "blocking", "json"] }
 dotenv = "0.15.0"
 tokio = { version = "1.41.1", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
