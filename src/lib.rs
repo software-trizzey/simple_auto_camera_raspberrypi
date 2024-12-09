@@ -8,7 +8,7 @@ use std::path::{ Path, PathBuf };
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 use tracing::{ info, error };
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 
 /// Helper function to initialize and monitor motion detection using a PIR sensor.
@@ -68,31 +68,40 @@ pub async fn run(info: &CameraInfo) -> Result<(), Box<dyn std::error::Error>> {
 
     info!("Camera activated. Waiting for motion...");
 
+    let buffer_duration = Duration::from_secs(30);
+    let mut last_capture_time = Instant::now() - buffer_duration; // Initialize as elapsed
+
     loop {
         if pir_sensor.is_high() {
             info!("Motion detected! Capturing image...");
+            if last_capture_time.elapsed() >= buffer_duration {
+                info!("Motion detected! Capturing image...");
+                last_capture_time = Instant::now();
 
-            let image_buffer = camera.take_one().unwrap();
+                let image_buffer = camera.take_one().unwrap();
 
-            let current_directory = env::current_dir().unwrap();
-            let mut static_path = PathBuf::from(current_directory);
-            static_path.push("static");
+                let current_directory = env::current_dir().unwrap();
+                let mut static_path = PathBuf::from(current_directory);
+                static_path.push("static");
 
-            let timestamp = Local::now().format("%Y%m%d%H%M%S").to_string();
-            let filename = format!("raspi-camera-{}.jpg", timestamp);
-            static_path.push(&filename);
+                let timestamp = Local::now().format("%Y%m%d%H%M%S").to_string();
+                let filename = format!("raspi-camera-{}.jpg", timestamp);
+                static_path.push(&filename);
 
-            info!("Creating file at {:?}", static_path);
-            let mut file = File::create(&static_path).await.unwrap();
-            file.write_all(&image_buffer).await?;
-            file.flush().await?;
-            drop(file); // ensure file is closed
+                info!("Creating file at {:?}", static_path);
+                let mut file = File::create(&static_path).await.unwrap();
+                file.write_all(&image_buffer).await?;
+                file.flush().await?;
+                drop(file); // ensure file is closed
 
-            info!("Saved image as {}", filename);
+                info!("Saved image as {}", filename);
 
-            send_discord_message(&static_path).await?;
+                send_discord_message(&static_path).await?;
 
-            info!("Done!");
+                info!("Done!");
+            } else {
+                info!("Motion detected, but within buffer period. Skipping capture.");
+            }
         }
 
         // Polling interval to avoid constant CPU usage

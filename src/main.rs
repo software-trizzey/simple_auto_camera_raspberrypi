@@ -1,10 +1,17 @@
 use rascam::*;
 use tracing::{error, info};
 use dotenv::dotenv;
+use tracing_subscriber;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv().ok();
+
+    tracing_subscriber::fmt()
+    .with_target(false) // Hides module paths from logs
+    .with_level(true)
+    .with_thread_ids(true) // Optionally include thread IDs
+    .init();
 
     let info = info().unwrap();
     if info.cameras.len() < 1 {
