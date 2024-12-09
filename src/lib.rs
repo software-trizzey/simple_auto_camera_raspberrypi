@@ -6,7 +6,6 @@ use reqwest::multipart;
 use std::env;
 use std::path::{ Path, PathBuf };
 use tokio::fs::File;
-use tokio::time;
 use tokio::io::AsyncWriteExt;
 use tracing::{ info, error };
 use std::time::Duration;
@@ -36,7 +35,7 @@ async fn send_discord_message(file_path: &Path) -> Result<(), Box<dyn std::error
     tokio::io::AsyncReadExt::read_to_end(&mut file, &mut file_contents).await?;
 
     let form = multipart::Form::new()
-        .text("content", "**New photo from Raspberry Pi Camera!**")
+        .text("content", "**New activity detected by Raspberry Pi Camera!**")
         .part(
             "file",
             multipart::Part::bytes(file_contents).file_name(
