@@ -20,6 +20,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     info!("{}", info);
 
-    simple_auto_camera_raspberrypi::run(&info.cameras[0]).await?;
+    if let Err(e) = simple_auto_camera_raspberrypi::run(&info.cameras[0]).await {
+        error!("Application error: {}", e);
+        ::std::process::exit(1);
+    }
     Ok(())
 }

@@ -22,7 +22,6 @@ fn setup_motion_detection(pir_pin: u8) -> Result<InputPin, Box<dyn std::error::E
     Ok(pir_input)
 }
 
-
 async fn send_discord_message(file_path: &Path) -> Result<(), Box<dyn std::error::Error>> {
     let discord_url = env::var("DISCORD_URL").unwrap_or_default();
     if discord_url.is_empty() {
@@ -68,7 +67,7 @@ pub async fn run(info: &CameraInfo) -> Result<(), Box<dyn std::error::Error>> {
 
     info!("Camera activated. Waiting for motion...");
 
-    let buffer_duration = Duration::from_secs(30);
+    let buffer_duration = Duration::from_secs(10);
     let mut last_capture_time = Instant::now() - buffer_duration; // Initialize as elapsed
 
     loop {
