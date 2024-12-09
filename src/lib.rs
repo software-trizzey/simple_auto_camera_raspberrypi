@@ -1,4 +1,5 @@
 use chrono::Local;
+use rppal::gpio::{ Gpio, InputPin };
 use rascam::*;
 use reqwest::Client;
 use reqwest::multipart;
@@ -8,6 +9,18 @@ use tokio::fs::File;
 use tokio::time;
 use tokio::io::AsyncWriteExt;
 use tracing::{ info, error };
+
+
+/// Helper function to initialize and monitor motion detection using a PIR sensor.
+///
+/// # Arguments
+/// * `pir_pin` - GPIO pin number (BCM numbering) for the PIR sensor.
+fn setup_motion_detection(pir_pin: u8) -> Result<InputPin, Box<dyn std::error::Error>> {
+    let gpio = Gpio::new()?;
+    let pir_input = gpio.get(pir_pin)?.into_input();
+    info!("Motion detection initialized on GPIO pin {}", pir_pin);
+    Ok(pir_input)
+}
 
 
 async fn send_discord_message(file_path: &Path) -> Result<(), Box<dyn std::error::Error>> {
@@ -46,31 +59,43 @@ async fn send_discord_message(file_path: &Path) -> Result<(), Box<dyn std::error
 }
 
 pub async fn run(info: &CameraInfo) -> Result<(), Box<dyn std::error::Error>> {
+    // GPIO pin connected to the PIR sensor (BCM numbering)
+    let pir_pin = 17;
+    let pir_sensor = setup_motion_detection(pir_pin)?;
+    
     let mut camera = SimpleCamera::new(info.clone()).unwrap();
     camera.activate().unwrap();
 
-    time::sleep(time::Duration::from_millis(2000)).await;
+    info!("Camera activated. Waiting for motion...");
 
-    let image_buffer = camera.take_one().unwrap();
+    loop {
+        if pir_sensor.is_high() {
+            info!("Motion detected! Capturing image...");
 
-    let current_directory = env::current_dir().unwrap();
-    let mut static_path = PathBuf::from(current_directory);
-    static_path.push("static");
+            let image_buffer = camera.take_one().unwrap();
 
-    let timestamp = Local::now().format("%Y%m%d%H%M%S").to_string();
-    let filename = format!("raspi-camera-{}.jpg", timestamp);
-    static_path.push(&filename);
+            let current_directory = env::current_dir().unwrap();
+            let mut static_path = PathBuf::from(current_directory);
+            static_path.push("static");
 
-    info!("Creating file at {:?}", static_path);
-    let mut file = File::create(&static_path).await.unwrap();
-    file.write_all(&image_buffer).await?;
-    file.flush().await?;
-    drop(file); // ensure file is closed
+            let timestamp = Local::now().format("%Y%m%d%H%M%S").to_string();
+            let filename = format!("raspi-camera-{}.jpg", timestamp);
+            static_path.push(&filename);
 
-    info!("Saved image as {}", filename);
+            info!("Creating file at {:?}", static_path);
+            let mut file = File::create(&static_path).await.unwrap();
+            file.write_all(&image_buffer).await?;
+            file.flush().await?;
+            drop(file); // ensure file is closed
 
-    send_discord_message(&static_path).await?;
+            info!("Saved image as {}", filename);
 
-    info!("Done!");
-    Ok(())
+            send_discord_message(&static_path).await?;
+
+            info!("Done!");
+        }
+
+        // Polling interval to avoid constant CPU usage
+        tokio::time::sleep(Duration::from_millis(500)).await;
+    }
 }

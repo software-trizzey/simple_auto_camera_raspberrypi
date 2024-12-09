@@ -993,6 +993,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "rppal"
+version = "0.20.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "302b549c5e3fe53ec00d2fa473da106f9effc8176a5206373d92b3c44e8b06db"
+dependencies = [
+ "libc",
+]
+
+[[package]]
 name = "rustc-demangle"
 version = "0.1.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1161,6 +1170,7 @@ dependencies = [
  "dotenv",
  "rascam",
  "reqwest",
+ "rppal",
  "tokio",
  "tokio-util 0.6.10",
  "tracing",
