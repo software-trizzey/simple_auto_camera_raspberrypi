@@ -14,9 +14,9 @@ _Note: This was tested using a Raspberry Pi 4 Model B Rev 1.4 and Ardu Camera_
 1. Build program `cargo build --release`
 1. Run production version `./release/simple_auto_camera_raspberrypi.bin`
 
-Assuming the camera is setup correctly and no errors were encountered, a new image should appear in the `static` directory.
+Assuming the camera is set up correctly and no errors are encountered, a new image should appear in the `static` directory.
 
-### Transfer images from Raspberry Pi to host machine via `ssh`
+### Transfer images from Raspberry Pi to the host machine via `ssh`
 
 **Run command below on host machine:**
 ```bash
@@ -32,7 +32,7 @@ scp -r  pi@[ip-address-redacted]:/home/pi/Projects/simple_auto_camera_raspberryp
 
 _Note: This will run the program every 30 minutes. Adjust the `OnCalendar` value (ex. OnCalendar=hourly or every minute: OnCalendar=*:0/1) in the timer file for a different interval._
 
-1. ***Build the Rust Program**
+1. **Build the Rust Program**
 
 ```bash
 cargo build --release
